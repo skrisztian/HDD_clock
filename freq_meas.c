@@ -1,65 +1,73 @@
-#include <avr/io.h>
-#include <stdio.h>
-#include <avr/interrupt.h>
+/*
+ * freq_meas.c
+ */ 
 
-#ifndef F_CPU
-#define F_CPU 16000000UL
-#endif
-#include <avr/delay.h>
+#include "freq_meas.h"
 
-#define ICR1_DDR			DDRB
-#define ICR1_DDR_POS		DDRB0
-
-// define global vars
-uint16_t overflow_cntr;
-uint16_t overflows;
-uint16_t signal1;
-uint16_t signal2;
-
-
-void freq_meas_init()
+void freq_meas_init(void)
 {
-	/**************
-	 * TC1 CONFIG *
-	 **************/
-	// TODO:
-	// Configure the TC1 timer properly :)
-	// Set prescaler to clkI/O/64
-	TCCR1B &= ~(1 << CS12);	TCCR1B |= 1 << CS11;
-	TCCR1B |= 1 << CS10;
+	// Using ICP1 - Timer/Counter1 Input Capture Timer
+
+	// Reset IO pin and set as input
+	ICR1_PORT &= ~(1 << PICR1);	ICR1_DDR &= ~(1 << PICR1);	
+	// Clear then set prescaler
+	TCCR1B &= ~(0x07);	TCCR1B |= CS_DIV_64;
 	
-	//Turn noise canceler
-	TCCR1B |= 1 << ICNC1;
+	// Turn on noise canceler
+	// TCCR1B |= 1 << ICNC1;
 	
-	//Capture rising edge
+	// Capture on rising edge
 	TCCR1B |= 1 << ICES1;
 	
-	//enable input capture interrupt
-	TIMSK1 |= 1 << ICIE1;		//enable overflow interrupt	TIMSK1 |= 1 << TOIE1;		//Configure PB0 as intput 	ICR1_DDR &= ~(1 << DDRB0);	
-	//
+	// Enable input capture interrupt
+	TIMSK1 |= 1 << ICIE1;		// Enable overflow interrupt	TIMSK1 |= 1 << TOIE1;		// Reset overflow counter
 	overflow_cntr = 0;
 }
 
-// TODO:
-// Write this function. It returns the measured frequency in Hz
+void freq_meas_deinit(void)
+{
+	// Turn off input capture
+	TCCR1B &= ~(0x07);	TCCR1B |= CS_NO_CLOCK;
+	
+	// Disable input capture interrupt
+	TIMSK1 &= ~(1 << ICIE1);			// Disable overflow interrupt	TIMSK1 &= ~(1 << TOIE1);	
+	return;
+}
 
-float get_freq()
+float get_period(void)
 {	
+	// Atomic copy
 	cli();
 	uint16_t first_signal = signal1;
 	uint16_t second_signal = signal2;
 	uint16_t number_of_overflows = overflows;
 	sei();
 	
-	int32_t diff = (int32_t)second_signal - (int32_t)first_signal;
-	uint32_t step_no = (((uint32_t)number_of_overflows) * 65536 ) + diff;
+	int32_t diff = (int32_t) second_signal - (int32_t) first_signal;
+	uint32_t step_no = (((uint32_t) number_of_overflows) * 65536 ) + diff;
 	
 	float signal_period = ((float) step_no) * (4.0 / 1000000);
-	float frequency = 1/signal_period;
+
+	return signal_period;
+}
+
+float get_frequency(void)
+{
+	float signal_period = get_period();	
+	float frequency = 1.0 / signal_period;
 	
 	return frequency;
 }
 
+float get_rpm(void)
+{
+	float frequency = get_frequency();
+	float rpm = frequency / 60.0;
+
+	return rpm;
+}
+
+// Input capture interrupt
 ISR(TIMER1_CAPT_vect)
 {
 	overflows = overflow_cntr;
@@ -68,9 +76,9 @@ ISR(TIMER1_CAPT_vect)
 	signal2 = ICR1;
 }
 
-//Count the number of overflows
-
+// TC1 timer overflow interrupt
 ISR(TIMER1_OVF_vect)
 {
+	//Count the number of overflows
 	overflow_cntr++;
 }
