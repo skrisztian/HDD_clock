@@ -2,7 +2,6 @@
 #include <avr/io.h>
 #include <stdio.h>
 
-
 #ifndef F_CPU
 #define F_CPU 16000000UL
 #endif
@@ -68,7 +67,7 @@ int main(void)
 	printf("Sensor is %d hour marks from 12\n", HOURS_TO_ZERO);
 	printf("Sensor is %d ticks (DEGREES_TO_ZERO degrees) from next hour mark\n", sensor_counts);
 	printf("Handle thickness is %d ticks (HANDLE_THICKNESS degrees)\n", thickness_counts);
-	printf("One minute is %d ticks (6 degrees)\n");
+	printf("One minute is %d ticks (6 degrees)\n", minute_counts);
 
 	// Compensate handle positions for sensor placement
 	adjust_time();

@@ -101,7 +101,7 @@ void get_time_from_adc(void)
 
 uint8_t get_button_state(void)
 {
-	return BUTTON_PIN & (1 << PBUTTON);
+	return (BUTTON_PIN & (1 << PBUTTON)) ? 1 : 0;
 }
 
 void wait_for_stable_spin(void)

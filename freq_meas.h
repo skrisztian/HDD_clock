@@ -9,7 +9,7 @@
 #define F_CPU 16000000UL
 #endif
 
-#include <avr/delay.h>
+#include <util/delay.h>
 
 #define PICR1				0
 #define ICR1_DDR			DDRB

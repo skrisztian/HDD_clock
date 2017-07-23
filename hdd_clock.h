@@ -16,6 +16,11 @@
 #include "ds1302.h"
 #include "freq_meas.h"
 
+#ifndef F_CPU
+#define F_CPU 16000000UL
+#endif
+#include <util/delay.h>
+
 /* IO PINS
  *
  * Sensor - SENSOR - PD2 - INT0
