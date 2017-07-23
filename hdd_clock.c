@@ -19,14 +19,14 @@ void init_sensor(void)
 	EICRA |= 1 << ISC00;
 	
 	// Reset hour counter used in interrupt
-	hour_count = 255;
+	encoder_position = 255;
 	
 	// Enable INT0 interrupt
 	EIMSK |= 1 << INT0;
 
 	return;
 	
-	// TODO check if hour_count 255 is ok for init value
+	// TODO check if encoder_position 255 is ok for init value
 }
 
 void init_color_leds(void)
@@ -284,34 +284,27 @@ void init_timers(void)
 	return;	
 }
 
-	// Enable compare interrupt
-	// TIMSK0 |= 1 << OCIE0A;
-
 
 ISR(INT0_vect)
 {
 	// This interrupt fires when the encoder passes over the sensor
 
-	hour_count++;
-	five_minutes_count++;
+	encoder_position++;
 
 	// Roll over. 12 o'clock = 0 hour
-	if (hour_count >= 12)
-		hour_count = 0;
-		
-	if (five_minutes_count >= 12)
-		five_minutes_count = 0;
+	if (encoder_position >= 12)
+		encoder_position = 0;
 
 	// Only show hour handle in the correct hour
 	// Start timer to correct sensor misalignment
-	if (hour_count == hours) {
+	if (encoder_position == hours) {
 		TCNT0 = 0;
 		TIMSK0 |= 1 << OCIE0A;
 	}
 	
 	// Only show minute handle in the correct minute
 	// Set and start timer to correct sensor misalignment and show minute
-	if (five_minutes_count == five_minutes) {
+	if (encoder_position == five_minutes) {
 		TCNT0 = 0;
 		OCR2A = minute_timer_counts;
 		TIMSK2 |= 1 << OCIE0A;
