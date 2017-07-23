@@ -87,15 +87,15 @@
 #define ERROR_THRESHOLD		5	// max tolerable RPM difference between measurements in %
 #define ENCODER_MARKS		6	// number of black strips on disk
 
-#define ON		1
-#define OFF		0
+typedef enum {SHOW_TIME, UPDATE_TIME_FROM_RTC, UPDATE_TIME_FROM_ADC} state_t;
 
 volatile uint8_t hours;
 volatile uint8_t minutes;
 volatile uint16_t seconds;
 volatile uint8_t hour_count;
-volatile uint8_t state;
+volatile state_t state;
 volatile uint8_t button_state;
+
 double hdd_period;
 uint8_t sensor_counts;
 uint8_t thickness_counts;

@@ -8,6 +8,7 @@
 #define ADC_DATA_MAX	1023	// ADC resolution 10 bit
 
 void ADC_init(void);
+void ADC_deinit(void);
 uint16_t ADC_read(uint8_t channel);
 uint16_t ADC_read_avg(uint8_t channel, uint8_t sample_size);
 

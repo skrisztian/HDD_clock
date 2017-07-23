@@ -232,7 +232,7 @@ void init_timers(void)
 
 ISR(INT0_vect)
 {
-	// This interrupt is fired when the encoder passes over the sensor
+	// This interrupt fires when the encoder passes over the sensor
 
 	// Hour_count also counts 5-minute units
 	hour_count++;
@@ -247,8 +247,10 @@ ISR(INT0_vect)
 		TCNT0 = 0;
 		TIMSK0 |= 1 << OCIE0A;
 	}
-		
-	//  Minute handle - TODO		
+	
+	// TODO:
+	// Minute handle
+	// Move HOURS_TO_ZERO calculation into the every second interrupt
 	
 }
 
@@ -256,7 +258,7 @@ ISR(TIMER0_COMPA_vect)
 {
 	// This interrupt fires when it is time to turn on hour handle
 	
-	// Turn of interrupt
+	// Turn off interrupt
 	TIMSK0 &= ~(1 << OCIE0A);
 	
 	// Turn on hour handle
@@ -283,13 +285,24 @@ ISR(TIMER0_COMPB_vect)
 
 ISR(TIMER1_COMPA_vect)
 {
+	// This interrupt fires every seconds
+	
 	// Update seconds, minutes hours
 	seconds++;
 
-	// Roll over after 12h
-	if (seconds >= 43200)
+	// Roll over at 12 o'clock
+	if (seconds >= 60) {
 		seconds = 0;
+		minutes++;
 		
-	minutes = seconds / 60;
-	hours = seconds / 3600;
+		if (minutes >= 60) {
+			minutes = 0;
+			hours++;
+			
+			(if hours >= 12) {
+				hours = 0;
+				state = UPDATE_TIME_FROM_RTC;
+			}
+		}
+	}
 }

@@ -33,7 +33,9 @@ int main(void)
 	// Try printf
 	printf("Startup...\r\n");
 
-	/* START HERE */
+	/* 
+	 * Setup and start-up
+	 */
 
 	// Turn on one color of LEDs
 	LED1_PORT |= 1 << PLED1;
@@ -65,6 +67,27 @@ int main(void)
 	// Use timers
 
 
+
+	/*
+	 * Normal operation
+	 */
+	
+	
+	
+	while (1) {
+		
+		// Showing the time is done from interrupts,
+		// only handle other actions
+		switch (state) {
+		case UPDATE_TIME_FROM_RTC:
+			get_time_from_rtc();
+			state = SHOW_TIME;
+			break;
+		case UPDATE_TIME_FROM_ADC:
+			state = SHOW_TIME;
+			break;
+		}
+	}
 
 }
 
