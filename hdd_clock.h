@@ -91,26 +91,35 @@ typedef enum {SHOW_TIME, UPDATE_TIME_FROM_RTC, UPDATE_TIME_FROM_ADC} state_t;
 
 volatile uint8_t hours;
 volatile uint8_t minutes;
+volatile uint8_t five_minutes;
+volatile uint8_t one_minutes;
 volatile uint16_t seconds;
 volatile uint8_t hour_count;
+volatile uint8_t five_minutes_count;
 volatile state_t state;
 volatile uint8_t button_state;
+volatile uint8_t sensor_counts;
+volatile uint8_t thickness_counts;
+volatile uint8_t minute_counts;
+volatile uint8_t minute_timer_counts;
 
 double hdd_period;
-uint8_t sensor_counts;
-uint8_t thickness_counts;
-uint8_t minute_counts;
+double hdd_period_error;
 
 void init_sensor(void);
 void init_color_leds(void);
 void init_button(void);
 void init_info_led(void);
-void init_clock_adjusts(void);
-void adjust_time(void);
+void init_clock_adc(void);
+void get_time_from_adc(void);
 uint8_t get_button_state(void);
 void wait_for_stable_spin(void);
+void print_float(float number, uint8_t decimals);
 void get_time_from_rtc(void);
 void calculate_timers(void);
 void init_timers(void);
+void adjust_time(void);
+void start_seconds_counter(void);
+void stop_seconds_counter(void);
 
 #endif // __HDD_CLOCK_H_INCLUDED

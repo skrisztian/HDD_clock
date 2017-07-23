@@ -14,6 +14,14 @@ void ADC_init(void) {
 	return;
 }
 
+void ADC_deinit(void) {
+
+	// Disable the ADC peripheral
+	ADCSRA &= ~(1 << ADEN);
+	
+	return;
+}
+
 uint16_t ADC_read(uint8_t channel) {
 	
 	// Clear then set ADC channel

@@ -17,14 +17,16 @@ void init_sensor(void)
 	
 	// Set interrupt for rising and falling edge
 	EICRA |= 1 << ISC00;
-
-	// Enable interrupt
-	EIMSK |= 1 << INT0;
 	
 	// Reset hour counter used in interrupt
-	hour_count = HOURS_TO_ZERO + hours - 1;
+	hour_count = 255;
+	
+	// Enable INT0 interrupt
+	EIMSK |= 1 << INT0;
 
 	return;
+	
+	// TODO check if hour_count 255 is ok for init value
 }
 
 void init_color_leds(void)
@@ -69,7 +71,7 @@ void init_info_led(void)
 	return;	
 }
 
-void init_clock_adjusts(void)
+void init_clock_adc(void)
 {
 	// Reset pins
 	HSET_PORT &= ~(1 << PHSET);
@@ -82,7 +84,7 @@ void init_clock_adjusts(void)
 	return;
 }
 
-void adjust_time(void)
+void get_time_from_adc(void)
 {
 	// Read hours and minutes value from potentiometers
 	
@@ -107,7 +109,6 @@ void wait_for_stable_spin(void)
 	
 	double hdd_period_current = 100.0;
 	double hdd_period_previous;
-	double hdd_period_error;
 	
 	// Turn on measurement peripherals
 	freq_meas_init();
@@ -130,6 +131,34 @@ void wait_for_stable_spin(void)
 	return;
 }
 
+void print_float(float number, uint8_t decimals)
+{
+	// Prints floating point number to stdout
+	// up to the given decimals
+
+	// Print the integer portion
+	printf("%d", (int) number);
+
+	// Print the decimal point
+	if (decimals > 0) {
+		printf(".");
+	}
+
+	// Print decimals after the dot up to the allowed number of decimals
+	uint8_t counter = 0;
+	while (number - (int) number > 0) {
+		counter++;
+		if (counter > decimals) {
+			break;
+			} else {
+			number = (number - (int) number) * 10;
+			printf ("%d", (int) number);
+		}
+	}
+
+	return;
+}
+
 void get_time_from_rtc(void)
 {
 	// 12 o'clock = 0 hour
@@ -141,6 +170,24 @@ void get_time_from_rtc(void)
 	seconds = read_rtc(SEC);
 	
 	return;
+}
+
+void adjust_time(void)
+{
+	// Adjust the position of the handles to
+	// roughly compensate for sensor position
+
+	hours += HOURS_TO_ZERO;
+	if (hours >= 12)
+		hours -= 12;
+	
+	minutes += (HOURS_TO_ZERO * 5);
+	if (minutes >= 60)
+		minutes -= 60;
+
+	five_minutes = minutes / 5;
+		
+	return;	
 }
 
 void calculate_timers(void)
@@ -166,6 +213,17 @@ void calculate_timers(void)
 	return;
 }
 
+void start_seconds_counter(void)
+{
+	TIMSK1 |= 1 << OCIE1A;
+	return;
+}
+
+void stop_seconds_counter(void)
+{
+	TIMSK1 &= ~(1 << OCIE1A);
+	return;
+}
 
 void init_timers(void)
 {
@@ -234,29 +292,37 @@ ISR(INT0_vect)
 {
 	// This interrupt fires when the encoder passes over the sensor
 
-	// Hour_count also counts 5-minute units
 	hour_count++;
+	five_minutes_count++;
 
-	// Roll over. 12 o'clock = 0 hour but we correct for sensor position
-	if (hour_count - HOURS_TO_ZERO >= 12)
-		hour_count = HOURS_TO_ZERO;
+	// Roll over. 12 o'clock = 0 hour
+	if (hour_count >= 12)
+		hour_count = 0;
+		
+	if (five_minutes_count >= 12)
+		five_minutes_count = 0;
 
-	// We only show the hour handle in the correct hour
-	// Correct sensor misalignment
-	if (hour_count - HOURS_TO_ZERO == hours) {
+	// Only show hour handle in the correct hour
+	// Start timer to correct sensor misalignment
+	if (hour_count == hours) {
 		TCNT0 = 0;
 		TIMSK0 |= 1 << OCIE0A;
 	}
 	
-	// TODO:
-	// Minute handle
-	// Move HOURS_TO_ZERO calculation into the every second interrupt
+	// Only show minute handle in the correct minute
+	// Set and start timer to correct sensor misalignment and show minute
+	if (five_minutes_count == five_minutes) {
+		TCNT0 = 0;
+		OCR2A = minute_timer_counts;
+		TIMSK2 |= 1 << OCIE0A;
+	}
 	
+	// TODO: check if minute_counter_counts values fit into 255
 }
 
 ISR(TIMER0_COMPA_vect)
 {
-	// This interrupt fires when it is time to turn on hour handle
+	// This interrupt fires when it is time to turn on the hour handle
 	
 	// Turn off interrupt
 	TIMSK0 &= ~(1 << OCIE0A);
@@ -271,7 +337,7 @@ ISR(TIMER0_COMPA_vect)
 
 ISR(TIMER0_COMPB_vect)
 {
-	// This interrupt fires when it is time to turn off hour handle
+	// This interrupt fires when it is time to turn off the hour handle
 	
 	// Turn off interrupt
 	TIMSK0 &= ~(1 << OCIE0B);
@@ -280,8 +346,31 @@ ISR(TIMER0_COMPB_vect)
 	LED1_PORT &= ~(1 << PLED1);
 }
 
+ISR(TIMER2_COMPA_vect)
+{
+	// This interrupt fires when it is time to turn on the minute handle
+	
+	// Turn off interrupt
+	TIMSK2 &= ~(1 << OCIE2A);
+	
+	// Turn on minute handle
+	LED2_PORT |= 1 << PLED2;
+	
+	// Wait for handle thickness
+	TCNT2 = 0;
+	TIMSK2 |= 1 << OCIE2B;
+}
 
-
+ISR(TIMER2_COMPB_vect)
+{
+	// This interrupt fires when it is time to turn off the minute handle
+	
+	// Turn off interrupt
+	TIMSK2 &= ~(1 << OCIE2B);
+	
+	// Turn off hour handle
+	LED2_PORT &= ~(1 << PLED2);
+}
 
 ISR(TIMER1_COMPA_vect)
 {
@@ -290,7 +379,7 @@ ISR(TIMER1_COMPA_vect)
 	// Update seconds, minutes hours
 	seconds++;
 
-	// Roll over at 12 o'clock
+	// Handle roll overs
 	if (seconds >= 60) {
 		seconds = 0;
 		minutes++;
@@ -299,10 +388,16 @@ ISR(TIMER1_COMPA_vect)
 			minutes = 0;
 			hours++;
 			
-			(if hours >= 12) {
+			if (hours >= 12) {
 				hours = 0;
 				state = UPDATE_TIME_FROM_RTC;
 			}
 		}
+		
+		five_minutes = minutes / 12;
+		one_minutes = minutes % 12;
+		minute_timer_counts = sensor_counts + one_minutes * minute_counts;
 	}
+	
+	// TODO: check if we need to adjust handle position in this function too
 }
