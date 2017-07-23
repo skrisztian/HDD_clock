@@ -34,7 +34,7 @@ void freq_meas_deinit(void)
 	return;
 }
 
-float get_period(void)
+double get_period(void)
 {	
 	// Atomic copy
 	cli();
@@ -46,23 +46,23 @@ float get_period(void)
 	int32_t diff = (int32_t) second_signal - (int32_t) first_signal;
 	uint32_t step_no = (((uint32_t) number_of_overflows) * 65536 ) + diff;
 	
-	float signal_period = ((float) step_no) * (4.0 / 1000000);
+	double signal_period = ((double) step_no) * (4.0 / 1000000);
 
 	return signal_period;
 }
 
-float get_frequency(void)
+double get_frequency(void)
 {
-	float signal_period = get_period();	
-	float frequency = 1.0 / signal_period;
+	double signal_period = get_period();	
+	double frequency = 1.0 / signal_period;
 	
 	return frequency;
 }
 
-float get_rpm(void)
+double get_rpm(void)
 {
-	float frequency = get_frequency();
-	float rpm = frequency / 60.0;
+	double frequency = get_frequency();
+	double rpm = frequency / 60.0;
 
 	return rpm;
 }

@@ -32,8 +32,8 @@ volatile uint16_t signal2;
 
 void freq_meas_init(void);
 void freq_meas_deinit(void);
-float get_period(void);
-float get_freq(void);
-float get_rpm(void);
+double get_period(void);
+double get_freq(void);
+double get_rpm(void);
 
 #endif // _FREQ_MEAS_H

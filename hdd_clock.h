@@ -78,20 +78,28 @@
 #define ADC_CH_HOUR			4
 #define ADC_CH_MIN			5
 
-#define HOUR_SCALE			93
-#define MIN_SCALE			17
+#define HOUR_SCALE			93	// divider to get 12 digits on potentiometer
+#define MIN_SCALE			17	// divider to get 60 digits on potentiometer
+
+#define DEGREES_TO_ZERO		10	// position of senor to the next hour mark in degrees
+#define HOURS_TO_ZERO		6	// number of hour marks between sensor and 12 o'clock
+#define HANDLE_THICKNESS	2	// thickness of minute and hour handles in degrees
+#define ERROR_THRESHOLD		5	// max tolerable RPM difference between measurements in %
+#define ENCODER_MARKS		6	// number of black strips on disk
 
 #define ON		1
 #define OFF		0
 
-#define ERROR_THRESHOLD		5	
-
 volatile uint8_t hours;
 volatile uint8_t minutes;
+volatile uint16_t seconds;
+volatile uint8_t hour_count;
 volatile uint8_t state;
 volatile uint8_t button_state;
-float hdd_period;
-
+double hdd_period;
+uint8_t sensor_counts;
+uint8_t thickness_counts;
+uint8_t minute_counts;
 
 void init_sensor(void);
 void init_color_leds(void);
@@ -102,7 +110,7 @@ void adjust_time(void);
 uint8_t get_button_state(void);
 void wait_for_stable_spin(void);
 void get_time_from_rtc(void);
-
-
+void calculate_timers(void);
+void init_timers(void);
 
 #endif // __HDD_CLOCK_H_INCLUDED

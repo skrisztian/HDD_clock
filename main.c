@@ -6,7 +6,7 @@
 #ifndef F_CPU
 #define F_CPU 16000000UL
 #endif
-#include <avr/delay.h>
+#include <util/delay.h>
 
 int main(void)
 {
@@ -49,12 +49,12 @@ int main(void)
 	LED2_PORT |= 1 << PLED2;
 	
 	// Wait until the disk rotation speed
-	// stabilizes. Save turning speed data.
+	// stabilizes. Measure turning speed.
 	wait_for_stable_spin();
 		
-	// Calculate timers
-	
-
+	// Calculate data for timers, then set parameters.
+	calculate_timers();
+	init_timers();
 		
 	// Read actual time from RTC
 	get_time_from_rtc();
