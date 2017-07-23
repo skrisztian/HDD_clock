@@ -97,7 +97,7 @@ volatile uint16_t seconds;
 volatile uint8_t hour_count;
 volatile uint8_t five_minutes_count;
 volatile state_t state;
-volatile uint8_t button_state;
+volatile uint8_t default_button_state;
 volatile uint8_t sensor_counts;
 volatile uint8_t thickness_counts;
 volatile uint8_t minute_counts;

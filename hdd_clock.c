@@ -55,7 +55,7 @@ void init_button(void)
 	PCICR |=  1 << BUTTON_INT_GROUP;
 	
 	// Save initial button state
-	button_state = get_button_state();
+	default_button_state = get_button_state();
 	
 	return;
 }
@@ -400,4 +400,15 @@ ISR(TIMER1_COMPA_vect)
 	}
 	
 	// TODO: check if we need to adjust handle position in this function too
+}
+
+ISR(PCINT0_vect)
+{
+	// This interrupt fires when the button on the board is pressed
+	
+	// Other pins of this port might fire this interrupt. Check for button pin
+	uint8_t button_state = get_button_state();
+	if (button_state != default_button_state) {
+		// Do something
+	}
 }
